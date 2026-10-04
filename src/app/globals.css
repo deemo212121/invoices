@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html {
+  font-feature-settings: "cv11", "ss01"; /* Inter: straight-sided digits and single-storey a */
+}
+
+body {
+  @apply bg-zinc-100/70 text-zinc-900;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-zinc-900/[0.06];
+  }
+  .label {
+    @apply mb-1.5 block text-[13px] font-medium text-zinc-700;
+  }
+  .input {
+    @apply h-10 w-full rounded-lg border-0 bg-white px-3 text-sm text-zinc-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-zinc-200 transition outline-none ring-inset placeholder:text-zinc-400 focus:ring-2 focus:ring-zinc-900;
+  }
+  textarea.input {
+    @apply h-auto py-2;
+  }
+  .btn {
+    @apply inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium whitespace-nowrap text-white shadow-sm transition hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100;
+  }
+  .btn-secondary {
+    @apply inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-medium whitespace-nowrap text-zinc-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-zinc-200 transition ring-inset hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-danger {
+    @apply inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-medium whitespace-nowrap text-red-600 ring-1 ring-red-200 transition ring-inset hover:bg-red-50 active:scale-[0.98];
+  }
+  .table {
+    @apply w-full text-left text-sm tabular-nums;
+  }
+  .table th {
+    @apply border-b border-zinc-200/80 px-3 py-2.5 text-[11px] font-medium tracking-wider text-zinc-500 uppercase;
+  }
+  .table td {
+    @apply border-b border-zinc-100 px-3 py-3;
+  }
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .table tbody tr {
+    @apply transition-colors hover:bg-zinc-50/80;
+  }
+  .page-title {
+    @apply text-2xl font-semibold tracking-tight text-zinc-900;
+  }
+  .page-subtitle {
+    @apply mt-1 text-sm text-zinc-500;
+  }
+  .link {
+    @apply font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition hover:decoration-zinc-900;
+  }
+}
+
+/* Thin, quiet scrollbars for the inner scrolling panels. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(212 212 216) transparent;
+}
+
+/* Tables that fill a card edge to edge get roomier outer columns. */
+@layer components {
+  .card-table {
+    @apply overflow-x-auto rounded-2xl bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-zinc-900/[0.06];
+  }
+  .card-table .table th {
+    @apply bg-zinc-50/70;
+  }
+  .card-table .table th:first-child,
+  .card-table .table td:first-child {
+    @apply pl-5;
+  }
+  .card-table .table th:last-child,
+  .card-table .table td:last-child {
+    @apply pr-5;
+  }
+}
+
+/* Paper is white: no app background in printouts. */
+@media print {
+  body {
+    background: white;
+  }
+}
+
+/* Less important table columns step aside on small screens. */
+@layer components {
+  .col-sm {
+    @apply hidden sm:table-cell;
+  }
+  .col-md {
+    @apply hidden md:table-cell;
+  }
+}
