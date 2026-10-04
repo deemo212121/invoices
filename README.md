@@ -56,21 +56,18 @@ This follows RR 7-2024 (Ease of Paying Taxes Act) as researched in October 2026.
 Ask your accountant or BIR RDO whether invoices from this system need BIR registration (an
 Acknowledgement Certificate) before you use them as official invoices.
 
-## Sign-in
+## Sign-in (optional)
 
-The app is protected by one store password.
-
-- **Creating it:** the first time you open the app on the shop computer, it asks you to create the
-  password. That can only be done on the shop computer or shop network, never through the online
-  address.
-- **Sessions:** a sign-in lasts 30 days on each device. **Sign out** is at the bottom of the sidebar,
-  or in the phone menu.
-- **Changing it:** go to **Settings → Business → Store password**. Changing it signs out every other
-  device.
-- **Guessing:** after 8 wrong attempts, that address is locked out for 15 minutes.
+- **No password (the default):** the app opens straight to the dashboard on this computer and the
+  shop Wi-Fi. The online address stays locked and shows "Online access is off".
+- **To turn sign-in on:** go to **Settings → Business → Turn on sign-in** and create a store password.
+  This can only be done on the shop computer or shop network. After that, every device signs in,
+  including the online address, and each sign-in lasts 30 days.
+- **Sign out** is in the sidebar or the phone menu, and **Change password** is in Settings. Changing
+  the password signs out every other device. After 8 wrong attempts, that address is locked out for
+  15 minutes.
 - **Where it's stored:** the password is kept hashed in the database, so it travels with backups. The
-  session signing key is in `data/session-secret`, which isn't backed up, so after a restore everyone
-  signs in again.
+  session key is in `data/session-secret`.
 
 ## Online access (Cloudflare Tunnel)
 

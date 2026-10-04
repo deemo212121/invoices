@@ -22,7 +22,7 @@ async function startSession() {
   (await cookies()).set(SESSION_COOKIE, createSessionToken(), cookieOptions(h));
 }
 
-/** First run: create the owner password. Allowed only on the shop computer/network, never online. */
+/** Turn on sign-in by creating the store password (Settings). Only on the shop computer/network, never online. */
 export async function setupPassword(_prev: FormState, fd: FormData): Promise<FormState> {
   if (isRemoteRequest(await headers())) return { error: "Set the password on the shop computer first." };
   if (currentHash()) return { error: "A password is already set. Sign in instead." };
@@ -33,7 +33,8 @@ export async function setupPassword(_prev: FormState, fd: FormData): Promise<For
   db.update(settings).set({ ownerPasswordHash: hashPassword(password) }).where(eq(settings.id, 1)).run();
   rotateSecret();
   await startSession();
-  redirect("/");
+  // The page re-renders with the change-password form, so confirm with a banner.
+  redirect("/settings?signin=on");
 }
 
 // Slow down guessing: 8 wrong passwords from one address locks it out for 15 minutes.

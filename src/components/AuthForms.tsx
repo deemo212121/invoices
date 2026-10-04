@@ -28,22 +28,23 @@ export function LoginForm({ next }: { next: string }) {
 export function SetupForm() {
   const [state, action, pending] = useActionState(setupPassword, {});
   return (
-    <form action={action} className="space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+    <form action={action} className="card space-y-4">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Create the store password</h1>
+        <h2 className="font-semibold tracking-tight">Turn on sign-in</h2>
         <p className="text-sm text-zinc-500">
-          You&apos;ll use it to sign in on this computer, your phone, and the online address.
+          Right now this computer and your shop Wi-Fi open the app without a password, and the online address is
+          off. Create a store password to require sign-in everywhere and allow online access.
         </p>
       </div>
       <FormMessage state={state} />
       <Field label="Password (at least 8 characters)">
-        <input name="password" type="password" required minLength={8} autoFocus autoComplete="new-password" className="input h-11" />
+        <input name="password" type="password" required minLength={8} autoComplete="new-password" className="input" />
       </Field>
       <Field label="Type it again">
-        <input name="confirm" type="password" required minLength={8} autoComplete="new-password" className="input h-11" />
+        <input name="confirm" type="password" required minLength={8} autoComplete="new-password" className="input" />
       </Field>
-      <button className="btn h-11 w-full" disabled={pending}>
-        {pending ? "Saving…" : "Create password and continue"}
+      <button className="btn" disabled={pending}>
+        {pending ? "Saving…" : "Create password"}
       </button>
     </form>
   );

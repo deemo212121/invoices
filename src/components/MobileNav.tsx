@@ -42,7 +42,15 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
 const tourId = (href: string) => (href === "/" ? "nav-home" : `nav-${href.slice(1)}`);
 
 /** Phone navigation: top bar with a menu drawer, and a bottom tab bar. Hidden on large screens. */
-export function MobileNav({ businessName, tiktokConnected }: { businessName: string; tiktokConnected: boolean }) {
+export function MobileNav({
+  businessName,
+  tiktokConnected,
+  signInOn,
+}: {
+  businessName: string;
+  tiktokConnected: boolean;
+  signInOn: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
@@ -118,12 +126,14 @@ export function MobileNav({ businessName, tiktokConnected }: { businessName: str
                 <Compass className="size-5 text-zinc-500" strokeWidth={1.75} />
                 Take the tour
               </button>
+              {signInOn && (
               <form action={logout}>
                 <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] hover:bg-white/5 hover:text-zinc-100">
                   <LogOut className="size-5 text-zinc-500" strokeWidth={1.75} />
                   Sign out
                 </button>
               </form>
+              )}
             </div>
           </aside>
         </div>
