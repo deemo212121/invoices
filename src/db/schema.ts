@@ -18,6 +18,8 @@ export const settings = sqliteTable("settings", {
   // Printing: invoice paper (a4 | 80mm | 58mm) and barcode label stock (see src/lib/labels.ts).
   invoicePaper: text("invoice_paper").notNull().default("a4"),
   labelFormat: text("label_format").notNull().default("a4-3x8"),
+  // Owner login: scrypt hash ("scrypt$<salt>$<hash>"); empty until set on the shop computer.
+  ownerPasswordHash: text("owner_password_hash").notNull().default(""),
 });
 
 export const products = sqliteTable(

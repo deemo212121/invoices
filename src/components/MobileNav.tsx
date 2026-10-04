@@ -8,6 +8,7 @@ import {
   Compass,
   FileText,
   LayoutDashboard,
+  LogOut,
   type LucideIcon,
   Menu,
   Package,
@@ -18,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { startTour } from "./GuidedTour";
+import { logout } from "@/app/actions/auth";
 
 const ALL: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -116,6 +118,12 @@ export function MobileNav({ businessName, tiktokConnected }: { businessName: str
                 <Compass className="size-5 text-zinc-500" strokeWidth={1.75} />
                 Take the tour
               </button>
+              <form action={logout}>
+                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] hover:bg-white/5 hover:text-zinc-100">
+                  <LogOut className="size-5 text-zinc-500" strokeWidth={1.75} />
+                  Sign out
+                </button>
+              </form>
             </div>
           </aside>
         </div>

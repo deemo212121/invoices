@@ -56,6 +56,34 @@ This follows RR 7-2024 (Ease of Paying Taxes Act) as researched in October 2026.
 Ask your accountant or BIR RDO whether invoices from this system need BIR registration (an
 Acknowledgement Certificate) before you use them as official invoices.
 
+## Sign-in
+
+The app is protected by one store password.
+
+- **Creating it:** the first time you open the app on the shop computer, it asks you to create the
+  password. That can only be done on the shop computer or shop network, never through the online
+  address.
+- **Sessions:** a sign-in lasts 30 days on each device. **Sign out** is at the bottom of the sidebar,
+  or in the phone menu.
+- **Changing it:** go to **Settings → Business → Store password**. Changing it signs out every other
+  device.
+- **Guessing:** after 8 wrong attempts, that address is locked out for 15 minutes.
+- **Where it's stored:** the password is kept hashed in the database, so it travels with backups. The
+  session signing key is in `data/session-secret`, which isn't backed up, so after a restore everyone
+  signs in again.
+
+## Online access (Cloudflare Tunnel)
+
+The app keeps running on the shop computer, and Cloudflare gives it a secure `https://` address.
+
+- **Starting it:** double-click **`start-online.cmd`**. It starts the app, then prints an address like
+  `https://some-words.trycloudflare.com`. Keep both windows open while you want it online.
+- **The address changes every time it starts.** For a permanent address, add a domain to Cloudflare
+  and create a named tunnel (`cloudflared tunnel login`, then `cloudflared tunnel create invoices`).
+- **The shop computer must be on** for the online address to work. On the shop network you can always
+  use `http://<computer's IP>:3000` instead.
+- **After updating the app,** run `npm run build` before starting it again.
+
 ## Where data lives
 
 | What                      | Where                    |

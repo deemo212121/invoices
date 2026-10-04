@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { startTour } from "./GuidedTour";
+import { logout } from "@/app/actions/auth";
 import {
   Boxes,
   Compass,
+  LogOut,
   FileText,
   LayoutDashboard,
   type LucideIcon,
@@ -91,6 +93,12 @@ export function Sidebar({
           <Compass className="size-[18px] text-zinc-500 group-hover:text-amber-300" strokeWidth={1.75} />
           Take the tour
         </button>
+        <form action={logout}>
+          <button className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100">
+            <LogOut className="size-[18px] text-zinc-500 group-hover:text-zinc-300" strokeWidth={1.75} />
+            Sign out
+          </button>
+        </form>
         <div className="px-3 text-[11px] text-zinc-600">Works offline · data stays on this computer</div>
       </div>
     </aside>
