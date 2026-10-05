@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HardDrive } from "lucide-react";
-import { deleteDeviceData } from "@/db";
+import { HardDrive, Sparkles } from "lucide-react";
+import { deleteDeviceData, replaceDatabase, save } from "@/db";
+import { loadDemo, storeIsEmpty } from "@/lib/demo";
 import { fileSize } from "@/lib/format";
 
 /** Where the store lives on this device, how much space it uses, and "start over". */
@@ -11,6 +12,21 @@ export function DeviceData() {
   const [kept, setKept] = useState<boolean | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState("");
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoDone, setDemoDone] = useState(false);
+  const empty = storeIsEmpty();
+
+  /** Adds the demo store; when the store has data, it is wiped first (after the DELETE confirmation). */
+  async function demo(wipe: boolean) {
+    setDemoBusy(true);
+    if (wipe) await replaceDatabase();
+    loadDemo();
+    await save();
+    setDemoBusy(false);
+    setDemoDone(true);
+    setConfirming(false);
+    setTyped("");
+  }
 
   useEffect(() => {
     navigator.storage?.estimate?.().then((e) => setUsage({ used: e.usage ?? 0, quota: e.quota ?? 0 }));
@@ -48,10 +64,22 @@ export function DeviceData() {
       </dl>
 
       <div className="border-t border-zinc-100 pt-3">
+        {demoDone && (
+          <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-600/10">
+            Demo data added: a sample mini mart with a month of sales. Use Start over to clear it.
+          </p>
+        )}
         {!confirming ? (
-          <button onClick={() => setConfirming(true)} className="btn-danger">
-            Start over…
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {empty && (
+              <button onClick={() => demo(false)} disabled={demoBusy} className="btn-secondary">
+                <Sparkles className="size-4" /> {demoBusy ? "Adding…" : "Add demo data"}
+              </button>
+            )}
+            <button onClick={() => setConfirming(true)} className="btn-danger">
+              {empty ? "Start over…" : "Start over or load demo data…"}
+            </button>
+          </div>
         ) : (
           <div className="space-y-2">
             <p className="text-sm text-red-700">
@@ -62,6 +90,9 @@ export function DeviceData() {
               <input value={typed} onChange={(e) => setTyped(e.target.value)} className="input max-w-40" aria-label="Type DELETE to confirm" />
               <button onClick={startOver} disabled={typed !== "DELETE"} className="btn-danger">
                 Delete everything
+              </button>
+              <button onClick={() => demo(true)} disabled={typed !== "DELETE" || demoBusy} className="btn-danger">
+                <Sparkles className="size-4" /> {demoBusy ? "Loading…" : "Delete and load demo data"}
               </button>
               <button
                 onClick={() => {
