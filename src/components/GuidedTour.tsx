@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MousePointerClick, Sparkles, X } from "lucide-react";
 
 // First-run walkthrough. Everything outside the highlighted element is blocked; "click" steps
@@ -13,6 +13,8 @@ type Step = {
   body: string;
   action: "click" | "next";
   href?: string; // menu steps: page to open when the menu item isn't visible (e.g. on a phone)
+  page?: string; // the page this step is on; the tour opens it if you're somewhere else
+  needsData?: boolean; // skipped when there's nothing to point at yet (a new store with no products or sales)
 };
 
 const STEPS: Step[] = [
@@ -22,55 +24,55 @@ const STEPS: Step[] = [
     action: "next",
   },
   { target: "nav-pos", title: "Start selling", body: "Every walk-in sale happens here. Click Point of Sale.", action: "click", href: "/pos" },
-  { target: "pos-product", title: "Add a product", body: "Tap a product to put it in the sale. Scanning a barcode works too.", action: "click" },
+  { target: "pos-product", page: "/pos", needsData: true, title: "Add a product", body: "Tap a product to put it in the sale. Scanning a barcode works too.", action: "click" },
   {
-    target: "pos-cart",
+    target: "pos-cart", page: "/pos",
     title: "The current sale",
     body: "Change quantities with − and +, or remove an item. Prices already include VAT.",
     action: "next",
   },
   {
-    target: "pos-senior",
+    target: "pos-senior", page: "/pos",
     title: "Senior citizen & PWD",
     body: "Turn this on for the 5% discount on basic necessities. The ₱125 weekly limit per ID is tracked for you.",
     action: "next",
   },
   {
-    target: "pos-charge",
+    target: "pos-charge", page: "/pos",
     title: "Charge",
     body: "Charging completes the sale: stock goes down and a numbered Sales Invoice is created. (We won't charge during the tour.)",
     action: "next",
   },
   { target: "nav-products", title: "Your catalog", body: "Click Products to see everything you sell.", action: "click", href: "/products" },
   {
-    target: "products-add",
+    target: "products-add", page: "/products",
     title: "Add products",
     body: "Name, SKU, barcode, prices, image, and VAT / senior-discount flags. Or import a CSV.",
     action: "next",
   },
   {
-    target: "products-labels",
+    target: "products-labels", page: "/products",
     title: "Barcode labels",
     body: "Print barcode stickers on A4 sheets or a thermal label printer. Products without a barcode get one generated.",
     action: "next",
   },
   { target: "nav-inventory", title: "Stock", body: "Click Inventory.", action: "click", href: "/inventory" },
   {
-    target: "inventory-form",
+    target: "inventory-form", page: "/inventory",
     title: "Record stock changes",
     body: "Deliveries, returns, damaged items and counts. Every change is logged, so stock always adds up.",
     action: "next",
   },
   { target: "nav-invoices", title: "Invoices", body: "Click Invoices.", action: "click", href: "/invoices" },
   {
-    target: "invoices-list",
+    target: "invoices-list", page: "/invoices", needsData: true,
     title: "Every sale's invoice",
     body: "Every sale gets a numbered Sales Invoice. Search by number or customer.",
     action: "next",
   },
-  { target: "invoices-first", title: "Open an invoice", body: "Click this invoice to open it.", action: "click" },
+  { target: "invoices-first", page: "/invoices", needsData: true, title: "Open an invoice", body: "Click this invoice to open it.", action: "click" },
   {
-    target: "invoice-paper",
+    target: "invoice-paper", needsData: true,
     title: "A4 or thermal receipt",
     body: "Print on an A4 page, or as an 80mm or 58mm receipt for thermal printers. The PDF follows your choice, and it's remembered.",
     action: "next",
@@ -83,14 +85,14 @@ const STEPS: Step[] = [
   },
   { target: "nav-settings", title: "Settings", body: "Click Settings to set up your business.", action: "click", href: "/settings" },
   {
-    target: "settings-vat",
+    target: "settings-vat", page: "/settings",
     title: "VAT-registered or Non-VAT",
     body: "Choose how tax appears on invoices, and fill in your TIN and address below.",
     action: "next",
   },
   { target: "tab-backup", title: "Backups", body: "Click Backup & Restore.", action: "click", href: "/settings/backup" },
   {
-    target: "backup-download",
+    target: "backup-download", page: "/settings/backup",
     title: "One-click backup",
     body: "Your store lives only in this browser. Download a backup ZIP often: it moves your store to another device and saves you if the browser is cleared.",
     action: "next",
@@ -122,6 +124,7 @@ type Rect = { top: number; left: number; width: number; height: number };
 
 export function GuidedTour() {
   const router = useRouter();
+  const pathname = usePathname();
   const [step, setStep] = useState<number | null>(null);
   // Position of the highlighted element, tagged with the step it was measured for.
   const [tracked, setTracked] = useState<{ step: number; rect: Rect | null; missing: boolean }>({
@@ -179,8 +182,13 @@ export function GuidedTour() {
       // Let the page reveal what the tour needs (e.g. open the cart sheet on a phone).
       window.dispatchEvent(new CustomEvent("tour:reveal", { detail: current.target }));
       if (!el) {
+        // Nothing to show yet (e.g. no products in a new store): move on instead of waiting.
+        if (current.needsData && Date.now() - started > 1000) {
+          next();
+          return;
+        }
         // Present but hidden (e.g. the desktop sidebar on a phone): no point waiting.
-        setTracked({ step, rect: null, missing: all.length > 0 || Date.now() - started > 5000 });
+        setTracked({ step, rect: null, missing: all.length > 0 || Date.now() - started > 2000 });
         return;
       }
       if (!scrolled) {
@@ -213,7 +221,12 @@ export function GuidedTour() {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [current, step]);
+  }, [current, step, next]);
+
+  // Each step happens on its own page: go there if the user wandered off (or resumed elsewhere).
+  useEffect(() => {
+    if (current?.page && pathname !== current.page) router.push(current.page);
+  }, [current, pathname, router]);
 
   // "Click" steps advance when the highlighted element itself is clicked (the click still happens).
   useEffect(() => {
