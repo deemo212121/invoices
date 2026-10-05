@@ -1,7 +1,4 @@
-"use server";
-
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
 import type { FormState } from "@/lib/form-state";
@@ -26,7 +23,6 @@ export async function saveSettings(_prev: FormState, fd: FormData): Promise<Form
     })
     .where(eq(settings.id, 1))
     .run();
-  revalidatePath("/", "layout");
   return { ok: "Settings saved" };
 }
 

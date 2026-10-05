@@ -1,35 +1,26 @@
-"use server";
-
-import fs from "node:fs/promises";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { db, UPLOAD_DIR, uploadPath } from "@/db";
+import { db } from "@/db";
 import { products } from "@/db/schema";
 import { applyStockChange, nowSql } from "@/lib/inventory";
 import type { FormState } from "@/lib/form-state";
 import { inStoreBarcode } from "@/lib/labels";
+import { deleteFile, putFile, shrinkImage } from "@/lib/files";
+import { productHref } from "@/lib/links";
 
-const IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-};
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
+/** Stores a resized copy of the photo in the database and returns its file name. */
 async function saveImage(file: File) {
-  const ext = IMAGE_TYPES[file.type];
-  if (!ext) throw new Error("Image must be JPG, PNG, WEBP or GIF");
-  if (file.size > 5 * 1024 * 1024) throw new Error("Image must be 5 MB or smaller");
-  const name = `${randomUUID()}${ext}`;
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  await fs.writeFile(uploadPath(name), Buffer.from(await file.arrayBuffer()));
+  if (!IMAGE_TYPES.includes(file.type)) throw new Error("Image must be JPG, PNG, WEBP or GIF");
+  if (file.size > 15 * 1024 * 1024) throw new Error("Image must be 15 MB or smaller");
+  const { data, type, ext } = await shrinkImage(file);
+  const name = `${crypto.randomUUID()}${ext}`;
+  putFile({ name, type, data });
   return name;
 }
 
-async function removeImage(name: string | null) {
-  if (name) await fs.rm(uploadPath(name), { force: true });
+function removeImage(name: string | null) {
+  deleteFile(name);
 }
 
 function str(fd: FormData, key: string) {
@@ -100,18 +91,16 @@ export async function saveProduct(_prev: FormState, fd: FormData): Promise<FormS
       }
       return created.id;
     });
-    if (existing && replaceImage) await removeImage(existing.imagePath);
+    if (existing && replaceImage) removeImage(existing.imagePath);
   } catch (e) {
-    if (newImage) await removeImage(newImage);
+    if (newImage) removeImage(newImage);
     return { error: friendly(e) };
   }
-  revalidatePath("/", "layout");
-  redirect(`/products/${savedId}`);
+  return { go: productHref(savedId) };
 }
 
 export async function setArchived(id: number, archived: boolean) {
   db.update(products).set({ archived, updatedAt: nowSql }).where(eq(products.id, id)).run();
-  revalidatePath("/", "layout");
 }
 
 /** Gives products without a barcode an in-store EAN-13 (2…), so they can get printed labels. */
@@ -127,6 +116,5 @@ export async function generateBarcodes(ids: number[]) {
       made++;
     }
   });
-  revalidatePath("/", "layout");
   return made;
 }

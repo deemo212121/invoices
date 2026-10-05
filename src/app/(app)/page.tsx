@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { dailyRevenue, dashboardStats, getSettings, listSales, recentSaleItems } from "@/lib/data";
 import { ColumnChart } from "@/components/charts/ColumnChart";
 import { dateTime, money, stockStatus } from "@/lib/format";
 import { AlertTriangle, Package, Plus, Receipt, type LucideIcon } from "lucide-react";
 import { Empty, StockBadge } from "@/components/ui";
+import { useLive } from "@/db/live";
+import { invoiceHref, productHref } from "@/lib/links";
 
 export default function Dashboard() {
+  useLive();
   const { today, productCount, lowStock } = dashboardStats();
   const items = recentSaleItems(8);
   const invoices = listSales({ limit: 8 });
@@ -86,7 +91,7 @@ export default function Dashboard() {
                 {items.map((i) => (
                   <tr key={i.id}>
                     <td>
-                      <Link href={`/invoices/${i.saleId}`} className="hover:underline">
+                      <Link href={invoiceHref(i.saleId)} className="hover:underline">
                         {i.name}
                       </Link>
                     </td>
@@ -122,7 +127,7 @@ export default function Dashboard() {
                 {invoices.map((s) => (
                   <tr key={s.id}>
                     <td>
-                      <Link href={`/invoices/${s.id}`} className="font-mono text-indigo-600 hover:underline">
+                      <Link href={invoiceHref(s.id)} className="font-mono text-indigo-600 hover:underline">
                         {s.invoiceNumber}
                       </Link>
                     </td>
@@ -155,7 +160,7 @@ export default function Dashboard() {
               {lowStock.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <Link href={`/products/${p.id}`} className="hover:underline">
+                    <Link href={productHref(p.id)} className="hover:underline">
                       {p.name}
                     </Link>
                   </td>

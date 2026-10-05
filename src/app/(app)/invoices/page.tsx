@@ -1,14 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import Form from "next/form";
+import { useSearchParams } from "next/navigation";
 import { Download, FileText } from "lucide-react";
 import { countSales, getSettings, listSales } from "@/lib/data";
 import { dateTime, money } from "@/lib/format";
 import { PageHeader, Pager } from "@/components/PageHeader";
 import { SearchInput } from "@/components/ui";
+import { useLive } from "@/db/live";
+import { downloadCsv } from "@/lib/csv-export";
+import { openInvoicePdf } from "@/lib/invoice-pdf";
+import { invoiceHref } from "@/lib/links";
 
 const PER_PAGE = 25;
 
-export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
-  const { q, page: pageParam } = await searchParams;
+export default function InvoicesPage() {
+  useLive();
+  const sp = useSearchParams();
+  const q = sp.get("q") ?? undefined;
+  const pageParam = sp.get("page");
   const total = countSales({ q });
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
   const page = Math.min(Math.max(1, Number(pageParam) || 1), pages);
@@ -25,15 +36,15 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         title="Invoices"
         subtitle={`${total.toLocaleString("en-US")} sales invoice${total === 1 ? "" : "s"}`}
         actions={
-          <a href="/api/csv/sales" download className="btn-secondary">
+          <button onClick={() => downloadCsv("sales")} className="btn-secondary">
             <Download className="size-4" /> Export CSV
-          </a>
+          </button>
         }
       />
-      <form className="flex gap-2">
+      <Form action="/invoices" className="flex gap-2">
         <SearchInput defaultValue={q} placeholder="Search invoice number or customer" />
         <button className="btn-secondary">Search</button>
-      </form>
+      </Form>
 
       {rows.length ? (
         <div className="card-table" data-tour="invoices-list">
@@ -54,7 +65,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 <tr key={s.id} className={s.cancelledAt ? "opacity-60" : ""}>
                   <td>
                     <Link
-                      href={`/invoices/${s.id}`}
+                      href={invoiceHref(s.id)}
                       data-tour={i === 0 ? "invoices-first" : undefined}
                       className="font-mono text-[13px] font-medium text-zinc-900 hover:underline"
                     >
@@ -79,14 +90,13 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                   <td className="col-md text-right text-zinc-600">{s.itemCount}</td>
                   <td className={`text-right font-semibold ${s.cancelledAt ? "line-through" : ""}`}>{money(s.total, cur)}</td>
                   <td className="text-right">
-                    <a
-                      href={`/invoices/${s.id}/pdf`}
-                      target="_blank"
+                    <button
+                      onClick={() => openInvoicePdf(s.id).catch((e) => alert(e.message))}
                       className="inline-grid size-8 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900"
                       aria-label={`Open PDF of ${s.invoiceNumber}`}
                     >
                       <FileText className="size-4" />
-                    </a>
+                    </button>
                   </td>
                 </tr>
               ))}

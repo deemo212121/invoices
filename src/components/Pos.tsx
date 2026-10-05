@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Minus, Package, Plus, ScanLine, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import { completeSale, getSeniorWeeklyUsage } from "@/app/actions/sales";
+import { fileUrl } from "@/lib/files";
+import { invoiceHref } from "@/lib/links";
 import { money, PAYMENT_METHODS, round2 } from "@/lib/format";
 import { BUYER_INFO_THRESHOLD, computeSale, SENIOR_WEEKLY_PURCHASE_CAP, VAT_RATE } from "@/lib/tax";
 
@@ -171,7 +173,7 @@ export function Pos({
         senior,
         buyer,
       });
-      if (res.ok) router.push(`/invoices/${res.saleId}`);
+      if (res.ok) router.push(invoiceHref(res.saleId));
       else setError(res.error);
     });
   }
@@ -230,7 +232,7 @@ export function Pos({
                 >
                   <div className="relative aspect-[16/10] w-full bg-zinc-50">
                     {p.imagePath ? (
-                      <img src={`/uploads/${p.imagePath}`} alt="" className="size-full object-cover" />
+                      <img src={fileUrl(p.imagePath) ?? undefined} alt="" className="size-full object-cover" />
                     ) : (
                       <div className="grid size-full place-items-center text-zinc-300">
                         <Package className="size-8" strokeWidth={1.25} />

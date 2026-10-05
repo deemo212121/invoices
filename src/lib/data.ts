@@ -1,4 +1,3 @@
-import "server-only";
 import { and, desc, eq, gte, isNull, like, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { customers, inventoryMovements, products, saleItems, sales, settings } from "@/db/schema";

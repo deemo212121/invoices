@@ -1,8 +1,4 @@
-"use server";
-
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { customers } from "@/db/schema";
 import type { FormState } from "@/lib/form-state";
@@ -23,6 +19,5 @@ export async function saveCustomer(_prev: FormState, fd: FormData): Promise<Form
   if (id) db.update(customers).set(values).where(eq(customers.id, id)).run();
   else db.insert(customers).values(values).run();
 
-  revalidatePath("/", "layout");
-  redirect("/customers");
+  return { go: "/customers" };
 }

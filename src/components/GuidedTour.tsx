@@ -92,7 +92,7 @@ const STEPS: Step[] = [
   {
     target: "backup-download",
     title: "One-click backup",
-    body: "Everything in one ZIP file. Restore it on a new computer and you're back in business.",
+    body: "Your store lives only in this browser. Download a backup ZIP often: it moves your store to another device and saves you if the browser is cleared.",
     action: "next",
   },
   {

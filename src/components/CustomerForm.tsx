@@ -1,12 +1,19 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { saveCustomer } from "@/app/actions/customers";
 import type { Customer } from "@/db/schema";
+import type { FormState } from "@/lib/form-state";
 import { Field, FormMessage } from "./ui";
 
 export function CustomerForm({ customer: c }: { customer?: Customer }) {
-  const [state, action, pending] = useActionState(saveCustomer, {});
+  const router = useRouter();
+  const [state, action, pending] = useActionState(async (prev: FormState, fd: FormData) => {
+    const res = await saveCustomer(prev, fd);
+    if (res.go) router.push(res.go);
+    return res;
+  }, {});
   return (
     <form action={action} className="card space-y-4">
       {c && <input type="hidden" name="id" value={c.id} />}

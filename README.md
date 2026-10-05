@@ -1,35 +1,51 @@
 # Inventory & Invoicing
 
-A local-first inventory, point-of-sale and invoicing app for a small business. Everything runs on your
-computer and works without internet access. There's no cloud database or account.
+An inventory, point-of-sale and invoicing app for small Philippine shops that runs entirely in the
+browser. There's no server, account or cloud database: each device keeps its own store, saved in that
+browser. After the first visit it also works offline.
 
-**Stack:** Next.js 16 (App Router), TypeScript, SQLite (better-sqlite3), Drizzle ORM, Tailwind CSS, pdfkit.
+**Stack:** Next.js 16 (static export), TypeScript, SQLite in the browser (sql.js / WebAssembly), Drizzle
+ORM, Tailwind CSS, pdfkit. Hosted as static files on Cloudflare.
+
+## How it works
+
+- **The database runs in the browser.** SQLite is loaded as WebAssembly and saved to the browser's
+  IndexedDB a moment after every change. Product images are stored inside the database.
+- **Every device and browser is separate.** A phone, a laptop and an incognito window each have their
+  own store. To move a store, download a backup on one device and import it on the other.
+- **Clearing the browser's site data deletes the store**, so download backups regularly. The app asks
+  the browser for protected storage, and Settings → Backup & Restore shows whether it was granted.
+- **First visit:** visitors choose **Start a new store**, **Explore with demo data** (a mini mart with a
+  month of connected sales, stock movements and customers), or **I have a backup file**.
+- **Works offline** after the first visit, through a service worker (`public/sw.js`). The app still loads
+  without internet, and nothing it does needs a connection.
 
 ## Getting started
 
 ```bash
 npm install
-npm run seed      # optional: fills an EMPTY database with a month of connected demo data
-npm run seed -- --reset   # rebuilds the demo (refuses unless the store is still the demo store)
 npm run dev       # http://localhost:3000
 ```
 
-For day-to-day use, run the faster production build:
+`npm run build` writes the static site to `out/`. `npm start` serves that folder locally.
 
-```bash
-npm run build
-npm start
-```
+Open **Settings** first and fill in your business name, address and TIN. They're printed on every
+invoice.
 
-The demo adds a store ("Mendoza Mini Mart (Demo)", in ₱) with 30 products and their images, 12
-customers, and about 220 invoices over the past 30 days. It also adds supplier deliveries, damaged
-stock, customer returns linked to invoices, stock counts, and a few products left low or out of
-stock. It is set up as a VAT-registered store with senior/PWD and business-buyer invoices. The seed only
-runs on an empty database. To remove the demo before real use, stop the app,
-delete the `data/` folder, and start the app again.
+## Deploying to Cloudflare
 
-Open **Settings** first and fill in your business name, address and currency. That information is
-printed on every invoice.
+The site is plain static files, so it's served by a Worker with static assets only, and there's no
+server code. `wrangler.jsonc` points Cloudflare at `out/`.
+
+In the Cloudflare dashboard, open **Workers & Pages → invoices → Settings → Build** and set:
+
+| Setting        | Value                 |
+| -------------- | --------------------- |
+| Build command  | `npm run build`       |
+| Deploy command | `npx wrangler deploy` |
+
+Every push to `main` then builds and deploys automatically. To deploy from your own computer
+instead, run `npm run build`, then `npm run deploy`.
 
 ## Philippine tax (VAT-registered / Non-VAT)
 
@@ -56,75 +72,53 @@ This follows RR 7-2024 (Ease of Paying Taxes Act) as researched in October 2026.
 Ask your accountant or BIR RDO whether invoices from this system need BIR registration (an
 Acknowledgement Certificate) before you use them as official invoices.
 
-## Sign-in (optional)
-
-- **No password (the default):** the app opens straight to the dashboard on this computer and the
-  shop Wi-Fi. The online address stays locked and shows "Online access is off".
-- **To turn sign-in on:** go to **Settings → Business → Turn on sign-in** and create a store password.
-  This can only be done on the shop computer or shop network. After that, every device signs in,
-  including the online address, and each sign-in lasts 30 days.
-- **Sign out** is in the sidebar or the phone menu, and **Change password** is in Settings. Changing
-  the password signs out every other device. After 8 wrong attempts, that address is locked out for
-  15 minutes.
-- **Where it's stored:** the password is kept hashed in the database, so it travels with backups. The
-  session key is in `data/session-secret`.
-
-## Online access (Cloudflare Tunnel)
-
-The app keeps running on the shop computer, and Cloudflare gives it a secure `https://` address.
-
-- **Starting it:** double-click **`start-online.cmd`**. It starts the app, then prints an address like
-  `https://some-words.trycloudflare.com`. Keep both windows open while you want it online.
-- **The address changes every time it starts.** For a permanent address, add a domain to Cloudflare
-  and create a named tunnel (`cloudflared tunnel login`, then `cloudflared tunnel create invoices`).
-- **The shop computer must be on** for the online address to work. On the shop network you can always
-  use `http://<computer's IP>:3000` instead.
-- **After updating the app,** run `npm run build` before starting it again.
-
 ## Where data lives
 
-| What                      | Where                    |
-| ------------------------- | ------------------------ |
-| Database                  | `data/app.db` (SQLite)   |
-| Product images            | `data/uploads/`          |
-| Documents                 | `data/documents/`        |
-| Automatic safety backups  | `data/backups/`          |
+| What           | Where                                                          |
+| -------------- | -------------------------------------------------------------- |
+| Database       | This browser's IndexedDB (database "invoices", key "database") |
+| Product images | Inside the database (`files` table), resized on upload        |
+| Safety backups | This browser's IndexedDB (the last 3, made before restores)    |
 
-The database and its tables are created automatically on first start.
+The tables are created, and upgraded when the app updates, automatically on first open.
 
-## Backup & restore (moving to a new computer)
+## Backup & restore (moving to another device)
 
-Go to **Settings → Backup & Restore**.
+Go to **Settings → Backup & Restore**. Everything happens in the browser; the file never leaves your device.
 
-1. On the old computer, click **Download backup** to get `business-backup-YYYY-MM-DD.zip`.
-2. Install the app on the new computer (`npm install`, `npm run build`, `npm start`).
-3. On the new computer, choose the ZIP under **Import backup** and click **Check backup**.
-4. Review what's in the backup, tick the confirmation box, and click **Restore backup**.
+1. On the old device, click **Download backup** to get `business-backup-YYYY-MM-DD.zip`. Keep a copy
+   somewhere safe, such as Google Drive or a USB drive.
+2. On the new device, open the site. On the welcome screen choose **I have a backup file**, or later use
+   **Import backup** and click **Check backup**.
+3. Review what's in the backup, tick the confirmation box, and click **Restore backup**.
+
+Backups from the earlier desktop version of the app restore here too.
 
 The ZIP contains:
 
 ```
 backup/
 ├── database.sqlite   products, inventory, customers, sales/invoices, settings
-├── manifest.json     date, source computer, row counts, SHA-256 of every file
+├── manifest.json     date, source device, row counts, SHA-256 of every file
 ├── images/           product images
-└── documents/        everything in data/documents
+└── documents/        documents (kept for backups from the desktop version)
 ```
 
 How a restore protects your data:
 
-- **Check:** the ZIP is unpacked into a separate staging folder. Every file is matched against its
-  checksum, and the staged database is checked for integrity, required tables, broken record links,
-  row counts that match the manifest, and schema version. If any check fails, the backup is rejected and
-  your current data is never touched.
-- **Safety backup:** before anything changes, the current data is saved as
-  `data/backups/pre-restore-<date-time>.zip`. To undo a restore, import that file.
-- **Swap and verify:** the current files are moved aside and the restored files are moved in. The
-  database is then reopened and checked again, and every image and document must be present.
-- **Rollback:** if any step fails, the previous files are moved back automatically.
+- **Check:** every file is matched against its checksum, and a separate copy of the database is checked
+  for integrity, required tables, broken record links, row counts that match the manifest, and schema
+  version. If any check fails, the backup is rejected and your current data is never touched.
+- **Safety backup:** before anything changes, the current data is saved in this browser as
+  `pre-restore-<date-time>.zip` (the last 3 are kept). Download it from the same page to undo a restore.
+- **Swap and verify:** the restored database replaces the current one, is upgraded if needed, gets its
+  images back, and is checked again. Every image and document must be present.
+- **Rollback:** if any step fails, the previous database is put back automatically.
+- **Start over:** **This device → Start over** deletes the store on this device and returns to the
+  welcome screen.
 
 Backups from an older version of the app are upgraded automatically on restore. Backups from a newer
-version are refused, so update the app first.
+version are refused; reload the page to get the latest version first.
 
 ## Features
 
@@ -140,7 +134,8 @@ version are refused, so update the app first.
   The server recalculates every total from database prices. Stock goes down in the same transaction,
   and a sale that would push stock below zero is rejected.
 - **Invoices**: numbered `INV-<year>-<6 digits>` (e.g. `INV-2026-000001`), with the sequence restarting
-  each year. You can view, print (browser print, without the sidebar) or open/download a PDF.
+  each year. You can view, print (browser print, without the sidebar) or open/download a PDF, which is
+  made in the browser. Print as A4 or as an 80mm or 58mm thermal receipt.
 
 ## CSV import & export
 
@@ -178,51 +173,30 @@ Invoices pages.
 
 ## TikTok Shop
 
-Go to **Settings → Marketplaces**. This needs internet only while syncing. The rest of the app keeps
-working offline.
-
-1. In TikTok Shop Partner Center, create a **Custom** app with the redirect URL
-   `http://localhost:3000/api/tiktok/callback`.
-2. Enter the **App Key**, **App Secret** and the app's **authorization link** in Settings →
-   Marketplaces, then click **Connect TikTok Shop**. If the redirect doesn't come back, paste the
-   address it landed on under "Connect with an authorization code".
-3. Click **Sync now**, or turn on auto-sync, which runs every 10 minutes while the app is open.
-
-Each sync does four things:
-
-- **Downloads your TikTok products** and links each SKU to your product with the same SKU. You can
-  change the links under **Product links**.
-- **Imports paid orders** (awaiting shipment or later) as sales tagged **TikTok**, each with your own
-  Sales Invoice and normal stock movements. Unpaid orders wait.
-- **Reverses cancelled orders:** stock is returned and the invoice is marked cancelled.
-- **Flags problems instead of guessing.** Orders with an unlinked SKU or not enough stock are listed
-  under **TikTok orders** and retried on the next sync.
-- **Sends your stock levels** to TikTok for every linked SKU.
-
-TikTok prices are VAT-inclusive, like the POS. The invoice uses the price the buyer paid per item.
-Shipping fees aren't included, because they belong to TikTok's logistics.
-
-The App Secret and tokens are stored only in `data/app.db`, which means they're also in backups, so
-keep backup files private. API calls follow TikTok's official Node.js SDK, which is kept in
-`vendor/tiktok-shop-sdk` as a reference.
+Shown as **Coming soon**. Syncing TikTok orders needs a server to hold the app secret and talk to
+TikTok's API, which this browser-only version doesn't have.
 
 ## Project layout
 
 ```
-src/db/schema.ts        Tables (products, customers, sales, sale_items, inventory_movements, settings)
-src/db/index.ts         SQLite connection + automatic migrations
-src/lib/inventory.ts    applyStockChange(): the single place stock quantities change
-src/lib/data.ts         Read queries used by pages
-src/lib/pdf.ts          Invoice PDF layout
-src/app/actions/        Server actions (products, inventory, customers, sales, settings)
-src/app/...             Pages; invoices/[id]/pdf and uploads/[file] are route handlers
-drizzle/                SQL migrations
+src/db/schema.ts         Tables (products, customers, sales, sale_items, inventory_movements, settings, files)
+src/db/index.ts          SQLite in the browser: open, migrate, save to IndexedDB, sync between tabs
+src/db/live.ts           useLive(): re-renders a screen when the database changes
+src/lib/inventory.ts     applyStockChange(): the single place stock quantities change
+src/lib/data.ts          Read queries used by pages
+src/lib/backup.ts        Backup ZIP export, checks and restore
+src/lib/pdf.ts           Invoice PDF layout
+src/lib/demo.ts          "Explore with demo data"
+src/app/actions/         Writes (products, inventory, customers, sales, settings)
+src/app/(app)/           Pages; detail pages take ?id= (e.g. /products/item?id=12)
+scripts/prepare.mjs      Before dev/build: copies the SQLite engine to public/, bundles the migrations
+drizzle/                 SQL migrations
 ```
 
 ## Changing the schema
 
-Edit `src/db/schema.ts`, then run `npm run db:generate`. The new migration is applied automatically the
-next time the app starts. `npm run db:studio` opens a browser view of the database.
+Edit `src/db/schema.ts`, then run `npm run db:generate`. The new migration is bundled on the next dev
+or build, and every browser applies it the next time it opens the app.
 
 ## Notes
 

@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { TikTokLoginButton } from "./TikTokLoginButton";
-import { BarChart3, Boxes, CheckCircle2, Circle, FileText, RefreshCw, Settings2 } from "lucide-react";
+import { BarChart3, Boxes, CheckCircle2, Circle, FileText, RefreshCw } from "lucide-react";
 
 const FEATURES = [
   { icon: RefreshCw, title: "Automatic order sync", body: "Paid TikTok orders become sales here, with your own Sales Invoice." },
@@ -9,10 +7,10 @@ const FEATURES = [
   { icon: FileText, title: "BIR-ready records", body: "VAT handled the same way as your in-store sales." },
 ];
 
-/** Shown instead of the TikTok dashboard until a shop is connected. */
-export function TikTokComingSoon({ hasKeys }: { hasKeys: boolean }) {
+/** TikTok Shop isn't available yet: what it will do, and where it stands. */
+export function TikTokComingSoon() {
   const steps = [
-    { done: hasKeys, label: "Developer app created and keys saved" },
+    { done: true, label: "Developer app created" },
     { done: false, label: "TikTok partner registration approved" },
     { done: false, label: "Shop connected" },
   ];
@@ -30,12 +28,6 @@ export function TikTokComingSoon({ hasKeys }: { hasKeys: boolean }) {
             Orders, stock and invoices from TikTok will sync here automatically. It switches on once TikTok approves
             the connection.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <TikTokLoginButton ready={hasKeys} light />
-            <Link href="/settings/marketplaces" className="inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-zinc-300 ring-1 ring-white/20 transition hover:bg-white/10 hover:text-white">
-              <Settings2 className="size-4" /> Connection settings
-            </Link>
-          </div>
         </div>
       </section>
 

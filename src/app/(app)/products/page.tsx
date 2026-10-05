@@ -1,13 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import Form from "next/form";
+import { useSearchParams } from "next/navigation";
 import { Barcode, Download, Package, Plus, Upload } from "lucide-react";
 import { products } from "@/db/schema";
 import { distinctValues, getSettings, listProducts, type ProductFilters } from "@/lib/data";
 import { money, stockStatus } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { ProductThumb, SearchInput, StockBadge } from "@/components/ui";
+import { useLive } from "@/db/live";
+import { downloadCsv } from "@/lib/csv-export";
+import { productHref } from "@/lib/links";
 
-export default async function ProductsPage({ searchParams }: { searchParams: Promise<ProductFilters> }) {
-  const f = await searchParams;
+export default function ProductsPage() {
+  useLive();
+  const f = Object.fromEntries(useSearchParams()) as ProductFilters;
   const rows = listProducts(f);
   const categories = distinctValues(products.category);
   const brands = distinctValues(products.brand);
@@ -24,9 +32,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <Link href="/settings/csv" className="btn-secondary">
               <Upload className="size-4" /> Import
             </Link>
-            <a href="/api/csv/products" download className="btn-secondary">
+            <button onClick={() => downloadCsv("products")} className="btn-secondary">
               <Download className="size-4" /> Export
-            </a>
+            </button>
             <Link href="/products/labels" className="btn-secondary" data-tour="products-labels">
               <Barcode className="size-4" /> Print labels
             </Link>
@@ -37,7 +45,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         }
       />
 
-      <form className="flex flex-wrap items-center gap-2">
+      <Form action="/products" className="flex flex-wrap items-center gap-2">
         <SearchInput defaultValue={f.q} placeholder="Search name, SKU or barcode" />
         <select name="category" defaultValue={f.category ?? ""} className="input w-auto">
           <option value="">All categories</option>
@@ -67,7 +75,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             Clear
           </Link>
         )}
-      </form>
+      </Form>
 
       {rows.length ? (
         <div className="card-table">
@@ -86,7 +94,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               {rows.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <Link href={`/products/${p.id}`} className="flex items-center gap-3">
+                    <Link href={productHref(p.id)} className="flex items-center gap-3">
                       <ProductThumb src={p.imagePath} size={40} />
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-zinc-900 hover:underline">{p.name}</span>

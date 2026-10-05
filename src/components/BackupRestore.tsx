@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { BackupInfo, Check, Counts } from "@/lib/backup";
+import { BackupError, restoreBackup, validateBackup, type BackupInfo, type Check, type Counts } from "@/lib/backup";
 import { dateTime, fileSize } from "@/lib/format";
 
 type Step =
@@ -20,8 +19,7 @@ const ROWS: { key: keyof Counts; label: string }[] = [
   { key: "sale_items", label: "Invoice lines" },
 ];
 
-export function BackupRestore() {
-  const router = useRouter();
+export function BackupRestore({ onRestored }: { onRestored?: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>({ kind: "idle" });
   const [error, setError] = useState("");
@@ -33,31 +31,28 @@ export function BackupRestore() {
     setError("");
     setConfirmed(false);
     setStep({ kind: "checking" });
-    const res = await fetch("/api/backup/validate", { method: "POST", body: file });
-    const body = await res.json();
-    if (!res.ok) {
-      setError(body.error);
+    try {
+      setStep({ kind: "review", info: await validateBackup(new Uint8Array(await file.arrayBuffer())) });
+    } catch (e) {
+      setError(e instanceof BackupError ? e.message : `Could not check backup: ${e instanceof Error ? e.message : e}`);
       setStep({ kind: "idle" });
-    } else setStep({ kind: "review", info: body });
+    }
   }
 
   async function restore(info: BackupInfo) {
     setError("");
     setStep({ kind: "restoring", info });
-    const res = await fetch("/api/backup/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: info.token }),
-    });
-    const body = await res.json();
-    if (!res.ok) {
-      setError(body.error);
+    let body: { checks: Check[]; safetyBackup: string };
+    try {
+      body = await restoreBackup(info.token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
       setStep({ kind: "review", info });
       return;
     }
     setStep({ kind: "done", checks: body.checks, safetyBackup: body.safetyBackup });
+    onRestored?.();
     if (fileRef.current) fileRef.current.value = "";
-    router.refresh();
   }
 
   function reset() {
@@ -110,11 +105,8 @@ export function BackupRestore() {
             ))}
           </ul>
           <p className="text-sm text-zinc-600">
-            Your previous data was saved as{" "}
-            <a href={`/api/backup/files/${step.safetyBackup}`} className="font-mono text-indigo-600 hover:underline">
-              {step.safetyBackup}
-            </a>
-            .
+            Your previous data was saved as <span className="font-mono">{step.safetyBackup}</span>. Download it
+            under <strong>Automatic safety backups</strong> below.
           </p>
           <button onClick={reset} className="btn-secondary">
             Done
@@ -144,7 +136,7 @@ function Review(props: {
         <dd className="font-medium">{m.businessName || "—"}</dd>
         <dt className="text-zinc-500">Created</dt>
         <dd>{dateTime(m.createdAt)}</dd>
-        <dt className="text-zinc-500">From computer</dt>
+        <dt className="text-zinc-500">From</dt>
         <dd>{m.sourceComputer}</dd>
         <dt className="text-zinc-500">App version</dt>
         <dd>{m.appVersion}</dd>

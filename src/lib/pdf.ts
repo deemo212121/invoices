@@ -1,5 +1,7 @@
-import "server-only";
-import PDFDocument from "pdfkit";
+// Runs in the browser: pdfkit's browser build, with the two standard fonts the layout uses.
+import PDFDocument, { registerStdFonts } from "pdfkit";
+import Helvetica from "pdfkit/standard-fonts/Helvetica";
+import HelveticaBold from "pdfkit/standard-fonts/HelveticaBold";
 import type { Invoice } from "./data";
 import { dateTime } from "./format";
 import { invoiceView, type InvoiceRow } from "./invoice-view";
@@ -7,19 +9,36 @@ import { invoiceView, type InvoiceRow } from "./invoice-view";
 // The built-in PDF fonts only cover Latin-1 (plus €), so other symbols become their currency code.
 const SYMBOL_CODE: Record<string, string> = { "₱": "PHP ", "₹": "INR ", "₩": "KRW ", "₫": "VND ", "฿": "THB ", "₦": "NGN " };
 
+registerStdFonts(Helvetica, HelveticaBold);
+
+/** Collects the document into one byte array once it ends. */
+function collect(doc: PDFKit.PDFDocument) {
+  const chunks: Uint8Array[] = [];
+  doc.on("data", (c: Uint8Array) => chunks.push(c));
+  return new Promise<Uint8Array>((resolve) =>
+    doc.on("end", () => {
+      const out = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+      let at = 0;
+      for (const c of chunks) {
+        out.set(c, at);
+        at += c.length;
+      }
+      resolve(out);
+    }),
+  );
+}
+
 function pdfMoney(n: number, symbol: string) {
   const sym = /^[\x20-\xFF€]*$/.test(symbol) ? symbol : (SYMBOL_CODE[symbol.trim()] ?? "");
   const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return `${n < 0 ? "-" : ""}${sym}${s}`;
 }
 
-export function renderInvoicePdf(inv: Invoice): Promise<Buffer> {
+export function renderInvoicePdf(inv: Invoice): Promise<Uint8Array> {
   const { sale, items, business: b } = inv;
   const view = invoiceView(inv);
   const doc = new PDFDocument({ size: "A4", margin: 50 });
-  const chunks: Buffer[] = [];
-  doc.on("data", (c: Buffer) => chunks.push(c));
-  const done = new Promise<Buffer>((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
+  const done = collect(doc);
 
   const fmt = (n: number) => pdfMoney(n, b.currencySymbol);
   const left = 50;
@@ -198,7 +217,7 @@ function drawReceipt(doc: PDFKit.PDFDocument, inv: Invoice, width: number) {
 }
 
 /** Receipt PDF sized to the roll width, and exactly as long as its content. */
-export function renderReceiptPdf(inv: Invoice, paper: "80mm" | "58mm"): Promise<Buffer> {
+export function renderReceiptPdf(inv: Invoice, paper: "80mm" | "58mm"): Promise<Uint8Array> {
   const width = (paper === "58mm" ? 58 : 80) * MM;
   // First pass on a scratch page to measure the height.
   const scratch = new PDFDocument({ size: [width, 5000], margin: 0 });
@@ -206,9 +225,7 @@ export function renderReceiptPdf(inv: Invoice, paper: "80mm" | "58mm"): Promise<
   scratch.end();
 
   const doc = new PDFDocument({ size: [width, Math.ceil(height)], margin: 0 });
-  const chunks: Buffer[] = [];
-  doc.on("data", (c: Buffer) => chunks.push(c));
-  const done = new Promise<Buffer>((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
+  const done = collect(doc);
   drawReceipt(doc, inv, width);
   doc.end();
   return done;

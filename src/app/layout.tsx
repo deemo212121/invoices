@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
 
-// Every page reads live data from the local database.
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Inventory & Invoicing",
-  description: "Local inventory, point of sale and invoicing",
+  description: "Inventory, point of sale and invoicing that runs in your browser. Your data stays on your device.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

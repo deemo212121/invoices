@@ -7,7 +7,6 @@ const TABS = [
   { href: "/settings", label: "Business" },
   { href: "/settings/backup", label: "Backup & Restore" },
   { href: "/settings/csv", label: "CSV Import/Export" },
-  { href: "/settings/marketplaces", label: "Marketplaces" },
 ];
 
 export function SettingsTabs() {

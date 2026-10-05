@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { startTour } from "./GuidedTour";
-import { logout } from "@/app/actions/auth";
 import {
   Boxes,
   Compass,
-  LogOut,
   FileText,
   LayoutDashboard,
   type LucideIcon,
@@ -29,17 +27,7 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({
-  businessName,
-  vatRegistered,
-  tiktokConnected,
-  signInOn,
-}: {
-  businessName: string;
-  vatRegistered: boolean;
-  tiktokConnected: boolean;
-  signInOn: boolean;
-}) {
+export function Sidebar({ businessName, vatRegistered }: { businessName: string; vatRegistered: boolean }) {
   const pathname = usePathname();
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const initials = businessName
@@ -77,7 +65,7 @@ export function Sidebar({
               strokeWidth={1.75}
             />
             {label}
-            {href === "/tiktok" && !tiktokConnected && (
+            {href === "/tiktok" && (
               <span className="ml-auto rounded-full bg-amber-300/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-300">
                 SOON
               </span>
@@ -95,15 +83,7 @@ export function Sidebar({
           <Compass className="size-[18px] text-zinc-500 group-hover:text-amber-300" strokeWidth={1.75} />
           Take the tour
         </button>
-        {signInOn && (
-        <form action={logout}>
-          <button className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100">
-            <LogOut className="size-[18px] text-zinc-500 group-hover:text-zinc-300" strokeWidth={1.75} />
-            Sign out
-          </button>
-        </form>
-        )}
-        <div className="px-3 text-[11px] text-zinc-600">Works offline · data stays on this computer</div>
+        <div className="px-3 text-[11px] text-zinc-600">Works offline · data stays on this device</div>
       </div>
     </aside>
   );

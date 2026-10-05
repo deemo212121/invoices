@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { downloadCsv } from "@/lib/csv-export";
 
 export function SalesExport() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const qs = new URLSearchParams({ ...(from && { from }), ...(to && { to }) }).toString();
-  const href = (type: string) => `/api/csv/${type}${qs ? `?${qs}` : ""}`;
 
   return (
     <div className="space-y-2 border-t border-zinc-100 pt-3">
@@ -20,12 +19,12 @@ export function SalesExport() {
           <span className="label">To</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input" />
         </label>
-        <a href={href("sales")} className="btn-secondary">
+        <button onClick={() => downloadCsv("sales", { from, to })} className="btn-secondary">
           Sales (one row per invoice)
-        </a>
-        <a href={href("sale-items")} className="btn-secondary">
+        </button>
+        <button onClick={() => downloadCsv("sale-items", { from, to })} className="btn-secondary">
           Sale items (one row per product sold)
-        </a>
+        </button>
       </div>
       <p className="text-xs text-zinc-500">Leave dates empty to export all sales.</p>
     </div>

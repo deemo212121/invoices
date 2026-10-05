@@ -1,7 +1,11 @@
+"use client";
+
 import { getSettings, listCustomers, listProducts } from "@/lib/data";
 import { Pos } from "@/components/Pos";
+import { useLive } from "@/db/live";
 
 export default function PosPage() {
+  useLive();
   const s = getSettings();
   const products = listProducts().map((p) => ({
     id: p.id,

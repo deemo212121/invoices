@@ -1,9 +1,14 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { useLive } from "@/db/live";
 import { getSettings, listProducts } from "@/lib/data";
 import { labelFormat } from "@/lib/labels";
 import { LabelStudio } from "@/components/LabelStudio";
 
-export default async function LabelsPage({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
-  const { ids } = await searchParams;
+export default function LabelsPage() {
+  useLive();
+  const ids = useSearchParams().get("ids");
   const s = getSettings();
   const products = listProducts().map((p) => ({
     id: p.id,

@@ -1,13 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // pdfkit reads its font metric files from its package folder at runtime,
-  // so it must not be bundled.
-  serverExternalPackages: ["pdfkit"],
-  experimental: {
-    serverActions: {
-      // Product image uploads go through server actions.
-      bodySizeLimit: "10mb",
+  // A plain static site (the out/ folder): everything runs in the browser, so any static host
+  // works. Cloudflare serves it (see wrangler.jsonc).
+  output: "export",
+  turbopack: {
+    resolveAlias: {
+      // Invoice PDFs are only made in the browser; use pdfkit's browser build everywhere.
+      pdfkit: "./node_modules/pdfkit/js/pdfkit.browser.mjs",
     },
   },
 };

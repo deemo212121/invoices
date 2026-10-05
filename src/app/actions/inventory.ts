@@ -1,6 +1,3 @@
-"use server";
-
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import type { MovementType } from "@/db/schema";
 import { getProduct } from "@/lib/data";
@@ -37,7 +34,6 @@ export async function recordStockChange(_prev: FormState, fd: FormData): Promise
 
   try {
     const { after } = db.transaction((tx) => applyStockChange(tx, { productId, type, change, note }));
-    revalidatePath("/", "layout");
     return { ok: `${product.name}: stock is now ${after}` };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };

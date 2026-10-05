@@ -16,15 +16,6 @@ export function toCsv(headers: string[], rows: Cell[][]) {
   return "\uFEFF" + Papa.unparse({ fields: headers, data }, { newline: "\r\n" });
 }
 
-export function csvResponse(csv: string, filename: string) {
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "no-store",
-    },
-  });
-}
 
 /** "Cost Price", "cost_price" and "costPrice" all become "costprice". */
 export function normalizeHeader(h: string) {

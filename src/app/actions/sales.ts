@@ -1,7 +1,4 @@
-"use server";
-
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { customers, products, saleItems, sales, settings } from "@/db/schema";
 import { applyStockChange, type Tx } from "@/lib/inventory";
@@ -133,7 +130,6 @@ export async function completeSale(
       return sale.id;
     });
 
-    revalidatePath("/", "layout");
     return { ok: true, saleId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };

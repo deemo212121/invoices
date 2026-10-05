@@ -1,5 +1,8 @@
+"use client";
+
 import { CsvImport } from "@/components/CsvImport";
 import { SalesExport } from "@/components/SalesExport";
+import { downloadCsv } from "@/lib/csv-export";
 
 export default function CsvPage() {
   return (
@@ -8,12 +11,12 @@ export default function CsvPage() {
         <h2 className="font-semibold">Export CSV</h2>
         <p className="text-sm text-zinc-600">Opens in Excel, Google Sheets or LibreOffice.</p>
         <div className="flex flex-wrap gap-2">
-          <a href="/api/csv/products" download className="btn-secondary">
+          <button onClick={() => downloadCsv("products")} className="btn-secondary">
             Products
-          </a>
-          <a href="/api/csv/customers" download className="btn-secondary">
+          </button>
+          <button onClick={() => downloadCsv("customers")} className="btn-secondary">
             Customers
-          </a>
+          </button>
         </div>
         <SalesExport />
       </section>

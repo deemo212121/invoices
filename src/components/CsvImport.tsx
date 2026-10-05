@@ -1,8 +1,19 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { previewCsvImport, runCsvImport } from "@/app/actions/csv";
-import type { Preview, PreviewRow } from "@/lib/csv-import";
+import { previewImport, runImport, type Preview, type PreviewRow } from "@/lib/csv-import";
+import { downloadTemplate } from "@/lib/csv-export";
+
+type Result = { ok: true; preview: Preview } | { ok: false; error: string };
+
+/** Runs an import step, turning thrown errors into a message. */
+function attempt(fn: () => Preview): Result {
+  try {
+    return { ok: true, preview: fn() };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
 
 type Kind = "products" | "customers";
 
@@ -50,7 +61,7 @@ export function CsvImport() {
     setText(content);
     setFileName(file.name);
     startTransition(async () => {
-      const res = await previewCsvImport(kind, content);
+      const res = attempt(() => previewImport(kind, content));
       if (res.ok) setPreview(res.preview);
       else setError(res.error);
     });
@@ -59,7 +70,7 @@ export function CsvImport() {
   function confirmImport() {
     if (!text) return;
     startTransition(async () => {
-      const res = await runCsvImport(kind, text);
+      const res = attempt(() => runImport(kind, text));
       if (res.ok) {
         setDone(res.preview);
         setPreview(null);
@@ -87,9 +98,9 @@ export function CsvImport() {
             {k === "products" ? "Products" : "Customers"}
           </button>
         ))}
-        <a href={`/api/csv/${kind}?template=1`} className="ml-auto text-sm text-indigo-600 hover:underline">
+        <button onClick={() => downloadTemplate(kind)} className="ml-auto text-sm text-indigo-600 hover:underline">
           Download {kind} template
-        </a>
+        </button>
       </div>
       <p className="text-sm text-zinc-600">{HELP[kind]}</p>
 

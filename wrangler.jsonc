@@ -1,0 +1,11 @@
+// Cloudflare serves the static site built into out/ (npm run build). There is no server code:
+// the app runs in each visitor's browser and keeps its data on their device.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "invoices",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}

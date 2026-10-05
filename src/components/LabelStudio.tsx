@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import JsBarcode from "jsbarcode";
 import { Barcode, Minus, Plus, Printer, Search, Sparkles, X } from "lucide-react";
 import { generateBarcodes } from "@/app/actions/products";
@@ -24,7 +23,6 @@ export function LabelStudio({
   initialFormat: string;
   preselected: number[];
 }) {
-  const router = useRouter();
   const [formatId, setFormatId] = useState(initialFormat);
   const [counts, setCounts] = useState<Record<number, number>>(() => Object.fromEntries(preselected.map((id) => [id, 1])));
   const [search, setSearch] = useState("");
@@ -185,7 +183,6 @@ export function LabelStudio({
                 onClick={() =>
                   start(async () => {
                     await generateBarcodes(missing.map((p) => p.id));
-                    router.refresh();
                   })
                 }
                 className="btn mt-3 h-9"

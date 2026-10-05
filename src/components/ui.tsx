@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type { StockStatus } from "@/lib/format";
 import { STOCK_LABEL } from "@/lib/format";
 import type { FormState } from "@/lib/form-state";
+import { fileUrl } from "@/lib/files";
 
 const STOCK_CLASS: Record<StockStatus, string> = {
   in: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
@@ -49,9 +51,10 @@ export function Field({
 }
 
 export function ProductThumb({ src, size = 40 }: { src: string | null; size?: number }) {
-  return src ? (
+  const url = fileUrl(src);
+  return url ? (
     <img
-      src={`/uploads/${src}`}
+      src={url}
       alt=""
       width={size}
       height={size}
@@ -94,6 +97,19 @@ export function SearchInput({ name = "q", defaultValue, placeholder }: { name?: 
         <path d="m20 20-3.5-3.5" strokeLinecap="round" />
       </svg>
       <input name={name} defaultValue={defaultValue} placeholder={placeholder} className="input pl-9" />
+    </div>
+  );
+}
+
+/** Shown when a ?id= link points at a record this device doesn't have. */
+export function Missing({ what, back }: { what: string; back: { href: string; label: string } }) {
+  return (
+    <div className="card mx-auto mt-10 max-w-md py-12 text-center">
+      <p className="font-medium">This {what} isn&apos;t in this store</p>
+      <p className="mt-1 text-sm text-zinc-500">It may have been made on another device, or the link is wrong.</p>
+      <Link href={back.href} className="btn-secondary mt-5">
+        Back to {back.label}
+      </Link>
     </div>
   );
 }

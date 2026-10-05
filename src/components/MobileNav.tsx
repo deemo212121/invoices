@@ -8,7 +8,6 @@ import {
   Compass,
   FileText,
   LayoutDashboard,
-  LogOut,
   type LucideIcon,
   Menu,
   Package,
@@ -19,7 +18,6 @@ import {
   X,
 } from "lucide-react";
 import { startTour } from "./GuidedTour";
-import { logout } from "@/app/actions/auth";
 
 const ALL: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,15 +40,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
 const tourId = (href: string) => (href === "/" ? "nav-home" : `nav-${href.slice(1)}`);
 
 /** Phone navigation: top bar with a menu drawer, and a bottom tab bar. Hidden on large screens. */
-export function MobileNav({
-  businessName,
-  tiktokConnected,
-  signInOn,
-}: {
-  businessName: string;
-  tiktokConnected: boolean;
-  signInOn: boolean;
-}) {
+export function MobileNav({ businessName }: { businessName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
@@ -109,7 +99,7 @@ export function MobileNav({
                 >
                   <Icon className={`size-5 ${active(href) ? "text-amber-300" : "text-zinc-500"}`} strokeWidth={1.75} />
                   {label}
-                  {href === "/tiktok" && !tiktokConnected && (
+                  {href === "/tiktok" && (
                     <span className="ml-auto rounded-full bg-amber-300/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">SOON</span>
                   )}
                 </Link>
@@ -126,14 +116,6 @@ export function MobileNav({
                 <Compass className="size-5 text-zinc-500" strokeWidth={1.75} />
                 Take the tour
               </button>
-              {signInOn && (
-              <form action={logout}>
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] hover:bg-white/5 hover:text-zinc-100">
-                  <LogOut className="size-5 text-zinc-500" strokeWidth={1.75} />
-                  Sign out
-                </button>
-              </form>
-              )}
             </div>
           </aside>
         </div>

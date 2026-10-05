@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { blob, integer, real, sqliteTable, text, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const now = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
 
@@ -18,7 +18,7 @@ export const settings = sqliteTable("settings", {
   // Printing: invoice paper (a4 | 80mm | 58mm) and barcode label stock (see src/lib/labels.ts).
   invoicePaper: text("invoice_paper").notNull().default("a4"),
   labelFormat: text("label_format").notNull().default("a4-3x8"),
-  // Owner login: scrypt hash ("scrypt$<salt>$<hash>"); empty until set on the shop computer.
+  // Unused since the app moved into the browser (kept so older backups still restore).
   ownerPasswordHash: text("owner_password_hash").notNull().default(""),
 });
 
@@ -134,6 +134,15 @@ export const inventoryMovements = sqliteTable(
   },
   (t) => [index("movements_product_idx").on(t.productId), index("movements_created_idx").on(t.createdAt)],
 );
+
+// Product images (and any documents) live inside the database, so one file holds everything.
+// Read and written with raw SQL in src/lib/files.ts (Drizzle would decode the bytes as text).
+export const files = sqliteTable("files", {
+  name: text("name").primaryKey(),
+  type: text("type").notNull(),
+  data: blob("data").notNull(),
+  createdAt: text("created_at").notNull().default(now),
+});
 
 // ---------- marketplaces ----------
 

@@ -3,6 +3,7 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import type { listMovements } from "@/lib/data";
 import { dateTime, MOVEMENT_LABEL } from "@/lib/format";
 import { Empty } from "./ui";
+import { invoiceHref, productHref } from "@/lib/links";
 
 const TYPE_STYLE: Record<string, string> = {
   in: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
@@ -50,7 +51,7 @@ export function MovementTable({
               <td className="text-zinc-500 sm:whitespace-nowrap">{dateTime(m.createdAt)}</td>
               {showProduct && (
                 <td className="max-w-64">
-                  <Link href={`/products/${m.productId}`} className="block truncate font-medium hover:underline">
+                  <Link href={productHref(m.productId)} className="block truncate font-medium hover:underline">
                     {m.productName}
                   </Link>
                   <span className="font-mono text-xs text-zinc-400">{m.sku}</span>
@@ -74,7 +75,7 @@ export function MovementTable({
               <td className="col-sm text-right text-zinc-600">{m.quantityAfter}</td>
               <td className="col-md max-w-72 truncate text-zinc-600">
                 {m.saleId ? (
-                  <Link href={`/invoices/${m.saleId}`} className="font-mono text-xs text-indigo-600 hover:underline">
+                  <Link href={invoiceHref(m.saleId)} className="font-mono text-xs text-indigo-600 hover:underline">
                     {m.invoiceNumber}
                   </Link>
                 ) : (

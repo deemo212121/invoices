@@ -1,4 +1,3 @@
-import "server-only";
 import { desc, like } from "drizzle-orm";
 import { sales } from "@/db/schema";
 import type { Tx } from "./inventory";

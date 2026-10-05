@@ -1,12 +1,20 @@
+"use client";
+
 import Link from "next/link";
+import Form from "next/form";
+import { useSearchParams } from "next/navigation";
 import { Download, Plus, Upload, Users } from "lucide-react";
 import { customerStats, getSettings, listCustomers } from "@/lib/data";
 import { dateOnly, money } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { Avatar, SearchInput } from "@/components/ui";
+import { useLive } from "@/db/live";
+import { downloadCsv } from "@/lib/csv-export";
+import { customerHref } from "@/lib/links";
 
-export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+export default function CustomersPage() {
+  useLive();
+  const q = useSearchParams().get("q") ?? undefined;
   const rows = listCustomers(q);
   const stats = customerStats();
   const cur = getSettings().currencySymbol;
@@ -21,19 +29,19 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             <Link href="/settings/csv" className="btn-secondary">
               <Upload className="size-4" /> Import
             </Link>
-            <a href="/api/csv/customers" download className="btn-secondary">
+            <button onClick={() => downloadCsv("customers")} className="btn-secondary">
               <Download className="size-4" /> Export
-            </a>
+            </button>
             <Link href="/customers/new" className="btn">
               <Plus className="size-4" /> Add customer
             </Link>
           </>
         }
       />
-      <form className="flex gap-2">
+      <Form action="/customers" className="flex gap-2">
         <SearchInput defaultValue={q} placeholder="Search name, phone or email" />
         <button className="btn-secondary">Search</button>
-      </form>
+      </Form>
       {rows.length ? (
         <div className="card-table">
           <table className="table">
@@ -52,7 +60,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 return (
                   <tr key={c.id}>
                     <td>
-                      <Link href={`/customers/${c.id}`} className="flex items-center gap-3">
+                      <Link href={customerHref(c.id)} className="flex items-center gap-3">
                         <Avatar name={c.name} />
                         <span>
                           <span className="block font-medium text-zinc-900 hover:underline">{c.name}</span>

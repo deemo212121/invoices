@@ -2,7 +2,10 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { saveProduct } from "@/app/actions/products";
+import { fileUrl } from "@/lib/files";
+import type { FormState } from "@/lib/form-state";
 import type { Product } from "@/db/schema";
 import { Field, FormMessage } from "./ui";
 
@@ -32,13 +35,19 @@ function Check({ name, checked, title, hint }: { name: string; checked?: boolean
 }
 
 export function ProductForm({ product, categories, brands }: { product?: Product; categories: string[]; brands: string[] }) {
-  const [state, action, pending] = useActionState(saveProduct, {});
+  const router = useRouter();
+  const [state, action, pending] = useActionState(async (prev: FormState, fd: FormData) => {
+    const res = await saveProduct(prev, fd);
+    if (res.go) router.push(res.go);
+    return res;
+  }, {});
   const p = product;
-  const [preview, setPreview] = useState<string | null>(p?.imagePath ? `/uploads/${p.imagePath}` : null);
+  const [preview, setPreview] = useState<string | null>(() => fileUrl(p?.imagePath));
   const [removed, setRemoved] = useState(false);
 
   // Release object URLs created for local previews.
-  useEffect(() => () => void (preview?.startsWith("blob:") && URL.revokeObjectURL(preview)), [preview]);
+  // (Stored images share a cached URL; only previews of a newly chosen file are released.)
+  useEffect(() => () => void (preview?.startsWith("blob:") && preview !== fileUrl(p?.imagePath) && URL.revokeObjectURL(preview)), [preview, p?.imagePath]);
 
   return (
     <form action={action} className="card p-6">
@@ -122,7 +131,7 @@ export function ProductForm({ product, categories, brands }: { product?: Product
         />
       </Section>
 
-      <Section title="Image" hint="JPG, PNG, WEBP or GIF, up to 5 MB.">
+      <Section title="Image" hint="JPG, PNG, WEBP or GIF. Resized automatically to keep your store small.">
         <div className="flex items-center gap-5">
           <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-zinc-50 ring-1 ring-zinc-200">
             {preview && !removed ? (

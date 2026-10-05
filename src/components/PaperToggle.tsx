@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { savePrintPreference } from "@/app/actions/settings";
 import { INVOICE_PAPERS, type InvoicePaper } from "@/lib/labels";
@@ -9,6 +9,7 @@ import { INVOICE_PAPERS, type InvoicePaper } from "@/lib/labels";
 export function PaperToggle({ current }: { current: InvoicePaper }) {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useSearchParams();
   const [, start] = useTransition();
   return (
     <div
@@ -22,7 +23,7 @@ export function PaperToggle({ current }: { current: InvoicePaper }) {
           onClick={() =>
             start(async () => {
               await savePrintPreference("invoicePaper", p.id);
-              router.replace(`${pathname}?paper=${p.id}`);
+              router.replace(`${pathname}?${new URLSearchParams({ ...Object.fromEntries(params), paper: p.id })}`);
             })
           }
           className={`h-9 rounded-md px-3 text-sm font-medium transition ${

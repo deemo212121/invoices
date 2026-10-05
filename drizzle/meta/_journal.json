@@ -43,6 +43,13 @@
       "when": 1791128569690,
       "tag": "0005_owner_login",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791166817470,
+      "tag": "0006_files",
+      "breakpoints": true
     }
   ]
 }

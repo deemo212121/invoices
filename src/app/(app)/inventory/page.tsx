@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useLive } from "@/db/live";
 import { countMovements, getProduct, listMovements, listProducts } from "@/lib/data";
 import { MOVEMENT_LABEL } from "@/lib/format";
 import { StockForm } from "@/components/StockForm";
@@ -9,12 +13,9 @@ import { PageHeader, Pager } from "@/components/PageHeader";
 const PER_PAGE = 25;
 const TYPES = ["", "sale", "in", "return", "damaged", "out", "adjustment"];
 
-export default async function InventoryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string; product?: string; page?: string }>;
-}) {
-  const sp = await searchParams;
+export default function InventoryPage() {
+  useLive();
+  const sp = Object.fromEntries(useSearchParams()) as { type?: string; product?: string; page?: string };
   const type = TYPES.includes(sp.type ?? "") ? (sp.type ?? "") : "";
   const productId = Number(sp.product) || undefined;
   const product = productId ? getProduct(productId) : undefined;
