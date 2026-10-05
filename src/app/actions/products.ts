@@ -7,11 +7,11 @@ import { inStoreBarcode } from "@/lib/labels";
 import { deleteFile, putFile, shrinkImage } from "@/lib/files";
 import { productHref } from "@/lib/links";
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 /** Stores a resized copy of the photo in the database and returns its file name. */
 async function saveImage(file: File) {
-  if (!IMAGE_TYPES.includes(file.type)) throw new Error("Image must be JPG, PNG, WEBP or GIF");
+  // Phones sometimes report HEIC or nothing at all; the decoder decides whether it can be read.
+  if (file.type && !file.type.startsWith("image/")) throw new Error("Choose a photo (JPG, PNG, WEBP or GIF).");
   if (file.size > 15 * 1024 * 1024) throw new Error("Image must be 15 MB or smaller");
   const { data, type, ext } = await shrinkImage(file);
   const name = `${crypto.randomUUID()}${ext}`;

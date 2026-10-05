@@ -61,13 +61,13 @@ export function fileUrl(name: string | null | undefined) {
 
 /** Shrinks a photo to at most `max` px on its longest side, as WebP (or JPEG), to keep the database small. */
 export async function shrinkImage(file: File, max = 640): Promise<{ data: Uint8Array; type: string; ext: string }> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+  const img = await decodeImage(file);
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  canvas.getContext("2d")!.drawImage(img.source, 0, 0, canvas.width, canvas.height);
+  img.done();
   const toBlob = (type: string) => new Promise<Blob | null>((r) => canvas.toBlob(r, type, 0.85));
   let blob = await toBlob("image/webp");
   if (!blob || blob.type !== "image/webp") blob = await toBlob("image/jpeg"); // Safari can't encode WebP
@@ -77,4 +77,29 @@ export async function shrinkImage(file: File, max = 640): Promise<{ data: Uint8A
     type: blob.type,
     ext: blob.type === "image/webp" ? ".webp" : ".jpg",
   };
+}
+
+/**
+ * Opens a photo for drawing. Tries the fast decoder first, then an <img> element, which reads
+ * more formats in some browsers (Safari opens iPhone HEIC photos this way).
+ */
+async function decodeImage(file: File): Promise<{ source: CanvasImageSource; width: number; height: number; done: () => void }> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    return { source: bitmap, width: bitmap.width, height: bitmap.height, done: () => bitmap.close() };
+  } catch {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    try {
+      img.src = url;
+      await img.decode();
+      return { source: img, width: img.naturalWidth, height: img.naturalHeight, done: () => URL.revokeObjectURL(url) };
+    } catch {
+      URL.revokeObjectURL(url);
+      throw new Error(
+        "This browser can't open that photo's format (often an iPhone HEIC photo, or a file renamed to .jpg). " +
+          "Save it as JPG or PNG, or take a screenshot of it, and upload that instead.",
+      );
+    }
+  }
 }

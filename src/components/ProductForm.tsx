@@ -147,7 +147,7 @@ export function ProductForm({ product, categories, brands }: { product?: Product
               <input
                 name="image"
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
+                accept="image/*"
                 className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
