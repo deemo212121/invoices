@@ -61,7 +61,7 @@ export function fileUrl(name: string | null | undefined) {
 
 /** Shrinks a photo to at most `max` px on its longest side, as WebP (or JPEG), to keep the database small. */
 export async function shrinkImage(file: File, max = 640): Promise<{ data: Uint8Array; type: string; ext: string }> {
-  const img = await decodeImage(file);
+  const img = await decodeImage(file, max);
   const scale = Math.min(1, max / Math.max(img.width, img.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(img.width * scale);
@@ -83,23 +83,38 @@ export async function shrinkImage(file: File, max = 640): Promise<{ data: Uint8A
  * Opens a photo for drawing. Tries the fast decoder first, then an <img> element, which reads
  * more formats in some browsers (Safari opens iPhone HEIC photos this way).
  */
-async function decodeImage(file: File): Promise<{ source: CanvasImageSource; width: number; height: number; done: () => void }> {
-  try {
-    const bitmap = await createImageBitmap(file);
-    return { source: bitmap, width: bitmap.width, height: bitmap.height, done: () => bitmap.close() };
-  } catch {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
+async function decodeImage(file: File, max: number): Promise<{ source: CanvasImageSource; width: number; height: number; done: () => void }> {
+  // Big phone photos (48 MP and up) can be too large for a phone browser to open at full size,
+  // so first ask for a reduced copy, then the full one, then fall back to an <img>.
+  for (const opts of [{ resizeWidth: max * 2, resizeQuality: "high" } as ImageBitmapOptions, undefined]) {
     try {
-      img.src = url;
-      await img.decode();
-      return { source: img, width: img.naturalWidth, height: img.naturalHeight, done: () => URL.revokeObjectURL(url) };
-    } catch {
-      URL.revokeObjectURL(url);
-      throw new Error(
-        "This browser can't open that photo's format (often an iPhone HEIC photo, or a file renamed to .jpg). " +
-          "Save it as JPG or PNG, or take a screenshot of it, and upload that instead.",
-      );
-    }
+      const bitmap = await createImageBitmap(file, opts);
+      return { source: bitmap, width: bitmap.width, height: bitmap.height, done: () => bitmap.close() };
+    } catch {}
   }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  try {
+    img.src = url;
+    await img.decode();
+    return { source: img, width: img.naturalWidth, height: img.naturalHeight, done: () => URL.revokeObjectURL(url) };
+  } catch {
+    URL.revokeObjectURL(url);
+    throw new Error(await unreadableReason(file));
+  }
+}
+
+/** Looks inside the file to say what it really is, since the name (".jpg") can be wrong. */
+async function unreadableReason(file: File) {
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const brand = new TextDecoder().decode(head.slice(4, 12));
+  const fix = "Take a screenshot of the photo and upload the screenshot, or save it as JPG/PNG first.";
+  if (/^ftyp(heic|heix|hevc|mif1|msf1)/.test(brand)) {
+    return `This is an iPhone HEIC photo${file.name.match(/.jpe?g$/i) ? " named .jpg" : ""}, which this browser can't open. ${fix}`;
+  }
+  if (/^ftypavi[fs]/.test(brand)) return `This is an AVIF image, which this browser can't open. ${fix}`;
+  if (head[0] === 0xff && head[1] === 0xd8) {
+    return `This JPG couldn't be opened on this device (it may be very large or damaged). ${fix}`;
+  }
+  return `This file isn't a photo this browser can open${file.type ? ` (${file.type})` : ""}. ${fix}`;
 }
