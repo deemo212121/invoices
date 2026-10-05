@@ -40,7 +40,7 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <PageHeader title="Inventory" subtitle="Every change to stock is recorded here: sales, deliveries, returns, damage and counts." />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_1fr]">
         <div className="xl:sticky xl:top-6" data-tour="inventory-form">
           <StockForm products={options} />
         </div>

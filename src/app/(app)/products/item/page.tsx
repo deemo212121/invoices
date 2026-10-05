@@ -67,7 +67,7 @@ export default function ProductPage() {
         <Figure label="Stock value (at cost)" value={money(p.costPrice * p.quantity, cur)} />
       </div>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
         <ProductForm key={p.id} product={p} categories={distinctValues(products.category)} brands={distinctValues(products.brand)} />
         <div className="space-y-6 xl:sticky xl:top-6">
           <StockForm productId={p.id} />

@@ -97,7 +97,7 @@ const STEPS: Step[] = [
   },
   {
     title: "You're all set",
-    body: "That's the tour. You can take it again any time from \"Take the tour\" at the bottom of the sidebar.",
+    body: "That's the tour. You can take it again any time from \"Take the tour\" at the bottom of the sidebar (in the Menu on a phone).",
     action: "next",
   },
 ];
@@ -242,16 +242,23 @@ export function GuidedTour() {
 
   const vw = typeof window === "undefined" ? 1280 : window.innerWidth;
   const vh = typeof window === "undefined" ? 800 : window.innerHeight;
+  // Kept inside the screen, so a long table doesn't push the highlight (and the card's room) off it.
   const hole = rect
-    ? { top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }
+    ? (() => {
+        const top = Math.max(4, rect.top - PAD);
+        const bottom = Math.min(vh - 4, rect.top + rect.height + PAD);
+        const left = Math.max(4, rect.left - PAD);
+        const right = Math.min(vw - 4, rect.left + rect.width + PAD);
+        return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      })()
     : null;
 
   // Card placement: beside sidebar items, otherwise below (or above when there's no room).
   const cardW = Math.min(340, vw - 32);
   let cardStyle: React.CSSProperties;
   if (vw < 640) {
-    // Phones: a bottom sheet, or a top sheet when the highlight is in the lower half.
-    const low = hole && hole.top + hole.height / 2 > vh * 0.5;
+    // Phones: a sheet at the top or bottom, whichever side of the highlight has more room.
+    const low = hole && hole.top > vh - (hole.top + hole.height);
     cardStyle = low ? { top: 16, left: 16 } : { top: vh - cardSize.h - 16, left: 16 };
   } else if (!hole) {
     cardStyle = { top: vh / 2 - cardSize.h / 2, left: vw / 2 - cardSize.w / 2 };
@@ -325,9 +332,11 @@ export function GuidedTour() {
         <h3 className="mt-2 text-base font-semibold tracking-tight text-zinc-900">{current.title}</h3>
         <p className="mt-1 text-sm leading-relaxed text-zinc-600">
           {goThere
-            ? current.body.replace(/^Click .*?.s*/, "") || "Let's open the next page."
+            ? current.body.replace(/^Click [^.]*\.\s*/, "") || "It's in the menu. Tap “Take me there” to open it."
             : missing
-              ? "This part isn't on screen right now. You can skip ahead."
+              ? current.action === "next"
+                ? current.body // just information: no need to point at it
+                : "This part isn't on screen right now. You can skip ahead."
               : current.body}
         </p>
 

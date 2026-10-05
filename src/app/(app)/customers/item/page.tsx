@@ -35,7 +35,7 @@ export default function CustomerPage() {
         <Figure label="Total spent" value={money(s?.spent ?? 0, cur)} />
         <Figure label="Average order" value={money(s?.orders ? s.spent / s.orders : 0, cur)} />
       </div>
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <CustomerForm key={c.id} customer={c} />
         <section className="card">
           <h2 className="mb-2 font-semibold tracking-tight">Purchase history</h2>
